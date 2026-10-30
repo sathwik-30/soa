@@ -25,8 +25,8 @@ public class BookingService {
     }
 
     public Booking createBooking(Booking booking) {
-        // Reserve first. The Parking Service performs an atomic
-        // available=true -> false update to prevent double booking.
+        // Parking Service reserves the slot atomically before this service
+        // creates a booking, preventing two requests from taking one slot.
         parkingClient.updateAvailability(booking.getParkingSlotId(), false);
 
         Booking savedBooking = null;
@@ -42,21 +42,27 @@ public class BookingService {
             billingClient.createBill(billingRequest);
             return savedBooking;
         } catch (RuntimeException failure) {
-            // Compensating actions: remove the booking and release the slot.
             if (savedBooking != null && savedBooking.getId() != null) {
+                try {
+                    billingClient.deleteBillForBooking(savedBooking.getId());
+                } catch (RuntimeException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
                 try {
                     bookingRepository.deleteById(savedBooking.getId());
                 } catch (RuntimeException cleanupFailure) {
                     failure.addSuppressed(cleanupFailure);
                 }
             }
+
             try {
                 parkingClient.updateAvailability(booking.getParkingSlotId(), true);
             } catch (RuntimeException cleanupFailure) {
                 failure.addSuppressed(cleanupFailure);
             }
+
             throw new IllegalStateException(
-                    "Booking could not be completed. The system attempted to release the parking slot.",
+                    "Booking failed. Compensation was attempted for the bill, booking, and parking slot.",
                     failure
             );
         }
