@@ -10,4 +10,5 @@ import com.example.billing.entity.Bill;
 public interface BillRepository extends JpaRepository<Bill, Long> {
     List<Bill> findByUsername(String username);
     Optional<Bill> findByBookingId(Long bookingId);
+    void deleteByBookingId(Long bookingId);
 }
