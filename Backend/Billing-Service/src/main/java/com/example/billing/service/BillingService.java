@@ -37,4 +37,9 @@ public class BillingService {
     public List<Bill> getBillsByUsername(String username) {
         return billRepository.findByUsername(username);
     }
+
+    @Transactional
+    public void deleteBillForBooking(Long bookingId) {
+        billRepository.deleteByBookingId(bookingId);
+    }
 }
