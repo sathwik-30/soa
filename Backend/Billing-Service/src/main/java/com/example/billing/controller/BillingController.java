@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestHeader;
+
 import com.example.billing.entity.Bill;
 import com.example.billing.service.BillingService;
 
@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/billing")
 public class BillingController {
-
     private final BillingService billingService;
 
     public BillingController(BillingService billingService) {
@@ -21,9 +20,7 @@ public class BillingController {
     }
 
     @PostMapping
-    public ResponseEntity<Bill> createBill(
-            @Valid @RequestBody Bill bill) {
-
+    public ResponseEntity<Bill> createBill(@Valid @RequestBody Bill bill) {
         return ResponseEntity.ok(billingService.createBill(bill));
     }
 
@@ -36,13 +33,17 @@ public class BillingController {
     public ResponseEntity<Bill> getBillById(@PathVariable Long id) {
         return ResponseEntity.ok(billingService.getBillById(id));
     }
-    
+
     @GetMapping("/my")
     public ResponseEntity<List<Bill>> getMyBills(
             @RequestHeader("X-Username") String username) {
+        return ResponseEntity.ok(billingService.getBillsByUsername(username));
+    }
 
-        return ResponseEntity.ok(
-            billingService.getBillsByUsername(username)
-        );
+    // Internal saga compensation endpoint. Keep this service port private.
+    @DeleteMapping("/booking/{bookingId}")
+    public ResponseEntity<Void> deleteBillForBooking(@PathVariable Long bookingId) {
+        billingService.deleteBillForBooking(bookingId);
+        return ResponseEntity.noContent().build();
     }
 }
