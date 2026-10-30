@@ -10,12 +10,11 @@ import com.example.booking.dto.ParkingSlotResponse;
 
 @FeignClient(name = "parking-service")
 public interface ParkingClient {
-
     @GetMapping("/parking/slots/{id}")
-    ParkingSlotResponse getParkingSlot(@PathVariable Long id);
+    ParkingSlotResponse getParkingSlot(@PathVariable("id") Long id);
 
     @PutMapping("/parking/slots/{id}/availability")
     ParkingSlotResponse updateAvailability(
-            @PathVariable Long id,
-            @RequestParam boolean available);
+            @PathVariable("id") Long id,
+            @RequestParam("available") boolean available);
 }
