@@ -20,29 +20,23 @@ public class AuthService {
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService) {
-
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
-    // Register a new user
+    // Public registration must never accept a client-selected role.
     public AuthResponse register(RegisterRequest request) {
+        String normalizedUsername = request.getUsername().trim();
 
-        if (userRepository.existsByUsername(request.getUsername())) {
+        if (userRepository.existsByUsername(normalizedUsername)) {
             throw new RuntimeException("Username already exists");
         }
 
-        String role = request.getRole();
-
-        if (role == null || role.isBlank()) {
-            role = "USER";
-        }
-
         User user = new User(
-                request.getUsername(),
+                normalizedUsername,
                 passwordEncoder.encode(request.getPassword()),
-                role
+                "USER"
         );
 
         userRepository.save(user);
@@ -54,17 +48,16 @@ public class AuthService {
         );
     }
 
-    // Login and generate JWT token
     public String login(LoginRequest request) {
+        String normalizedUsername = request.getUsername().trim();
 
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUsername(normalizedUsername)
                 .orElseThrow(() ->
                         new RuntimeException("Invalid username or password"));
 
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword())) {
-
             throw new RuntimeException("Invalid username or password");
         }
 

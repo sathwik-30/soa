@@ -22,18 +22,18 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<Booking> createBooking(
-            @Valid @RequestBody Booking booking) {
+            @Valid @RequestBody Booking booking,
+            @RequestHeader("X-Username") String authenticatedUsername) {
 
-        return ResponseEntity.ok(
-                bookingService.createBooking(booking)
-        );
+        // Identity comes from the verified JWT at the API Gateway,
+        // never from the username supplied in the request body.
+        booking.setUsername(authenticatedUsername);
+
+        return ResponseEntity.ok(bookingService.createBooking(booking));
     }
 
     @GetMapping
     public ResponseEntity<List<Booking>> getAllBookings() {
-
-        return ResponseEntity.ok(
-                bookingService.getAllBookings()
-        );
+        return ResponseEntity.ok(bookingService.getAllBookings());
     }
 }
